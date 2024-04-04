@@ -73,6 +73,15 @@ const currencies = new Map([
 
 const movements = [200, 450, -400, 3000, -650, -130, 70, 1300];
 
+const maxValue = (movements) => {
+  const max = movements.reduce((acc, curr) => {
+    if (acc < curr) return curr;
+    else return acc;
+  }, movements[0]);
+  console.log(max);
+};
+maxValue(movements);
+
 const displayMovements = (movements) => {
   containerMovements.innerHTML = "";
   movements.forEach((move, i) => {
@@ -87,5 +96,22 @@ const displayMovements = (movements) => {
     containerMovements.insertAdjacentHTML("afterbegin", html);
   });
 };
+const countDisplayBalance = (movements) => {
+  const balance = movements.reduce((acc, curr) => acc + curr, 0);
+  labelBalance.innerHTML = balance;
+  // console.log(balance);
+};
+countDisplayBalance(account1.movements);
+
+const createUsername = (accounts) => {
+  accounts.forEach((acc) => {
+    acc.userName = acc.owner
+      .toLowerCase()
+      .split(" ")
+      .map((ele) => ele[0])
+      .join("");
+  });
+};
+createUsername(accounts);
 displayMovements(account1.movements);
 /////////////////////////////////////////////////
