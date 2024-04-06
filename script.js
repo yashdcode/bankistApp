@@ -101,6 +101,26 @@ const countDisplayBalance = (movements) => {
   labelBalance.innerHTML = balance;
   // console.log(balance);
 };
+
+const calcDisplaySummary = (movements) => {
+  const summaryIn = movements
+    .filter((ele) => ele > 0)
+    .reduce((acc, ele) => acc + ele, 0);
+  labelSumIn.textContent = `${summaryIn}€`;
+
+  const summaryOut = movements
+    .filter((ele) => ele < 0)
+    .reduce((acc, ele) => acc + ele, 0);
+  labelSumOut.textContent = `${summaryOut}€`;
+
+  const interest = movements
+    .filter((ele) => ele > 0)
+    .map((ele) => ele * 0.012)
+    .filter((ele) => ele >= 1)
+    .reduce((acc, ele) => ele + acc, 0);
+  labelSumInterest.textContent = `${interest}€`;
+};
+calcDisplaySummary(account1.movements);
 countDisplayBalance(account1.movements);
 
 const createUsername = (accounts) => {
