@@ -5,31 +5,32 @@
 // BANKIST APP
 
 // Data
+let currentAccount = {};
 const account1 = {
   owner: "Jonas Schmedtmann",
   movements: [200, 450, -400, 3000, -650, -130, 70, 1300],
-  interestRate: 1.2, // %
+  interestRate: 0.012, // %
   pin: 1111,
 };
 
 const account2 = {
   owner: "Jessica Davis",
   movements: [5000, 3400, -150, -790, -3210, -1000, 8500, -30],
-  interestRate: 1.5,
+  interestRate: 0.015,
   pin: 2222,
 };
 
 const account3 = {
   owner: "Steven Thomas Williams",
   movements: [200, -200, 340, -300, -20, 50, 400, -460],
-  interestRate: 0.7,
+  interestRate: 0.007,
   pin: 3333,
 };
 
 const account4 = {
   owner: "Sarah Smith",
   movements: [430, 1000, 700, 50, 90],
-  interestRate: 1,
+  interestRate: 0.001,
   pin: 4444,
 };
 
@@ -91,17 +92,35 @@ const displayMovements = (movements) => {
        <div class="movements__type movements__type--${trans}">${
       i + 1
     } ${trans}</div>
-       <div class="movements__value">${move}</div>
+       <div class="movements__value">${move}€</div>
     </div>`;
     containerMovements.insertAdjacentHTML("afterbegin", html);
   });
 };
-const countDisplayBalance = (movements) => {
-  const balance = movements.reduce((acc, curr) => acc + curr, 0);
-  labelBalance.innerHTML = balance;
-  // console.log(balance);
+
+const countDisplayBalance = (acc) => {
+  acc.balance = acc.movements.reduce((mov, curr) => mov + curr, 0);
+  labelBalance.innerHTML = `${acc.balance}€`;
 };
-countDisplayBalance(account1.movements);
+
+const calcDisplaySummary = (account) => {
+  const summaryIn = account.movements
+    .filter((ele) => ele > 0)
+    .reduce((acc, ele) => acc + ele, 0);
+  labelSumIn.textContent = `${summaryIn}€`;
+
+  const summaryOut = account.movements
+    .filter((ele) => ele < 0)
+    .reduce((acc, ele) => acc + ele, 0);
+  labelSumOut.textContent = `${summaryOut}€`;
+
+  const interest = account.movements
+    .filter((ele) => ele > 0)
+    .map((ele) => ele * account.interestRate)
+    .filter((ele) => ele >= 1)
+    .reduce((acc, ele) => ele + acc, 0);
+  labelSumInterest.textContent = `${interest}€`;
+};
 
 const createUsername = (accounts) => {
   accounts.forEach((acc) => {
@@ -112,6 +131,93 @@ const createUsername = (accounts) => {
       .join("");
   });
 };
+
+const findAccount = (accounts, uname) => {
+  let flag = 0;
+  for (let acc of accounts) {
+    if (uname === acc.owner) {
+      flag = 1;
+      return acc;
+    }
+  }
+  if (flag === 1) return "account doesn't exist";
+};
 createUsername(accounts);
-displayMovements(account1.movements);
-/////////////////////////////////////////////////
+
+const updateUI = (account) => {
+  // display movements
+  displayMovements(account.movements);
+  // display summary
+  calcDisplaySummary(account);
+  //display balance
+  countDisplayBalance(account);
+  //clearing input fields
+};
+
+//User login implementation
+btnLogin.addEventListener("click", (e) => {
+  e.preventDefault();
+  const uname = inputLoginUsername.value;
+  const pin = Number(inputLoginPin.value);
+  console.log(uname, pin);
+  if (pin && uname) {
+    for (let account of accounts) {
+      if (account.userName === uname && account.pin === pin) {
+        console.log("login successfully");
+        updateUI(account);
+        currentAccount = account;
+        labelWelcome.textContent = `Welcome back, ${
+          account.owner.split(" ")[0]
+        }`;
+        containerApp.style.opacity = 100;
+        inputLoginUsername.value = "";
+        inputLoginPin.value = "";
+        break;
+      }
+    }
+  } else {
+    console.log("login failed....please login again");
+  }
+});
+
+//Money transfer implementation
+btnTransfer.addEventListener("click", (e) => {
+  e.preventDefault();
+  const uname = inputTransferTo.value;
+  const transferAmount = Number(inputTransferAmount.value);
+  const receiverAcc = accounts.find((acc) => acc.userName === uname);
+  if (
+    transferAmount > 0 &&
+    receiverAcc &&
+    currentAccount.balance >= transferAmount &&
+    receiverAcc?.useName !== currentAccount.userName
+  ) {
+    currentAccount.movements.push(-transferAmount);
+    receiverAcc.movements.push(transferAmount);
+    updateUI(currentAccount);
+  }
+  //clearing input fields
+  inputTransferAmount.vaue = "";
+  inputTransferTo.value = "";
+});
+
+//account close or delete
+btnClose.addEventListener("click", (e) => {
+  e.preventDefault();
+  const pin = Number(inputClosePin.value);
+  const uname = inputCloseUsername.value;
+  if (
+    uname &&
+    pin &&
+    uname === currentAccount.userName &&
+    pin === currentAccount.pin
+  ) {
+    const index = accounts.findIndex(
+      (acc) => acc.userName === currentAccount.userName
+    );
+    accounts.splice(index, 1);
+  }
+  inputClosePin.value = "";
+  inputCloseUsername.value = "";
+  containerApp.style.opacity = 0;
+});
