@@ -132,6 +132,17 @@ const createUsername = (accounts) => {
       .join("");
   });
 };
+
+const findAccount = (accounts, uname) => {
+  let flag = 0;
+  for (let acc of accounts) {
+    if (uname === acc.owner) {
+      flag = 1;
+      return acc;
+    }
+  }
+  if (flag === 1) return "account doesn't exist";
+};
 createUsername(accounts);
 displayMovements(account1.movements);
-/////////////////////////////////////////////////
+findAccount(accounts, "Sarah Smith");
