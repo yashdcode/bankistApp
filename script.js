@@ -83,9 +83,11 @@ const maxValue = (movements) => {
 };
 maxValue(movements);
 
-const displayMovements = (movements) => {
+const displayMovements = (movements, flag = false) => {
+  //sorting if flag is true
+  let movs = flag ? movements.slice().sort((a, b) => b - a) : movements;
   containerMovements.innerHTML = "";
-  movements.forEach((move, i) => {
+  movs.forEach((move, i) => {
     const trans = move < 0 ? "withdrawal" : "deposit";
     const html = `
     <div class="movements__row">
@@ -220,4 +222,31 @@ btnClose.addEventListener("click", (e) => {
   inputClosePin.value = "";
   inputCloseUsername.value = "";
   containerApp.style.opacity = 0;
+});
+
+//applying for loan
+
+btnLoan.addEventListener("click", (e) => {
+  e.preventDefault();
+  const loanAmt = Number(inputLoanAmount.value);
+  //checking for loan criterion
+  if (
+    loanAmt > 0 &&
+    currentAccount.movements.some((move) => move >= 0.1 * loanAmt)
+  ) {
+    // adding loan amount to the account
+    currentAccount.movements.push(loanAmt);
+    updateUI(currentAccount);
+  }
+  //clearing resources
+  inputLoanAmount.value = "";
+});
+
+// SORT account movements
+let flag = false;
+btnSort.addEventListener("click", (e) => {
+  e.preventDefault();
+  // displaying soted movements
+  displayMovements(currentAccount.movements, !flag);
+  flag = !flag;
 });
