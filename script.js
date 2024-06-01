@@ -8,9 +8,20 @@
 let currentAccount = {};
 const account1 = {
   owner: "Jonas Schmedtmann",
-  movements: [200, 450, -400, 3000, -650, -130, 70, 1300],
+  movements: [200, 450, -400, 3000, -650, -130, 70, 1300, 670],
   interestRate: 0.012, // %
   pin: 1111,
+  movementsDates: [
+    "2011-10-07T14:48:00.000Z",
+    "2011-09-05T14:48:00.000Z",
+    "2011-07-05T14:48:00.000Z",
+    "2011-01-04T14:48:00.000Z",
+    "2011-01-04T14:48:00.000Z",
+    "2011-09-05T14:48:00.000Z",
+    "2011-05-03T14:48:00.000Z",
+    "2011-05-02T14:48:00.000Z",
+    "2024-05-31T14:48:00.000Z",
+  ],
 };
 
 const account2 = {
@@ -18,6 +29,16 @@ const account2 = {
   movements: [5000, 3400, -150, -790, -3210, -1000, 8500, -30],
   interestRate: 0.015,
   pin: 2222,
+  movementsDates: [
+    "2011-06-05T14:48:00.000Z",
+    "2011-11-01T14:48:00.000Z",
+    "2011-10-04T14:48:00.000Z",
+    "2011-01-09T14:48:00.000Z",
+    "2011-05-04T14:48:00.000Z",
+    "2011-07-03T14:48:00.000Z",
+    "2011-05-01T14:48:00.000Z",
+    "2011-03-02T14:48:00.000Z",
+  ],
 };
 
 const account3 = {
@@ -25,6 +46,16 @@ const account3 = {
   movements: [200, -200, 340, -300, -20, 50, 400, -460],
   interestRate: 0.007,
   pin: 3333,
+  movementsDates: [
+    "2011-11-05T14:48:00.000Z",
+    "2011-09-05T14:48:00.000Z",
+    "2011-07-05T14:48:00.000Z",
+    "2011-01-04T14:48:00.000Z",
+    "2011-05-04T14:48:00.000Z",
+    "2011-07-03T14:48:00.000Z",
+    "2011-06-03T14:48:00.000Z",
+    "2011-10-03T14:48:00.000Z",
+  ],
 };
 
 const account4 = {
@@ -32,6 +63,13 @@ const account4 = {
   movements: [430, 1000, 700, 50, 90],
   interestRate: 0.001,
   pin: 4444,
+  movementsDates: [
+    "2011-09-05T14:48:00.000Z",
+    "2011-10-05T14:48:00.000Z",
+    "2011-09-05T14:48:00.000Z",
+    "2011-09-04T14:48:00.000Z",
+    "2011-08-04T14:48:00.000Z",
+  ],
 };
 
 const accounts = [account1, account2, account3, account4];
@@ -83,17 +121,40 @@ const maxValue = (movements) => {
 };
 maxValue(movements);
 
-const displayMovements = (movements, flag = false) => {
+// formating the movements date to print like TODAY, YESTERDAY & more than one two days
+const formateMovementDate = (date) => {
+  const calcDaysPassed = (date1, date2) =>
+    Math.round(Math.abs(date1 - date2) / (60 * 60 * 1000 * 24));
+  // Date calculation
+  const day = `${date.getDate()}`.padStart(2, 0);
+  const month = `${date.getMonth() + 1}`.padStart(2, 0);
+  const year = date.getFullYear();
+  const daysPassed = calcDaysPassed(new Date(), date);
+
+  //Logic to print the Days Passed
+  if (daysPassed === 0) return "TODAY";
+  else if (daysPassed === 1) return "YESTERDAY";
+  else if (daysPassed <= 7) return `${daysPassed} DAYS AGO`;
+  else return `${day}/${month}/${year}`;
+};
+const displayMovements = (account, flag = false) => {
   //sorting if flag is true
-  let movs = flag ? movements.slice().sort((a, b) => b - a) : movements;
+  let movs = flag
+    ? account.movements.slice().sort((a, b) => a - b)
+    : account.movements;
+  console.log("account dates", account.movementsDates);
   containerMovements.innerHTML = "";
   movs.forEach((move, i) => {
     const trans = move < 0 ? "withdrawal" : "deposit";
+    const transcDate = new Date(account.movementsDates[i]);
+    // Showing transaction Date for specific movement in current account
+    const daysPassed = formateMovementDate(transcDate);
     const html = `
     <div class="movements__row">
        <div class="movements__type movements__type--${trans}">${
       i + 1
     } ${trans}</div>
+      <div class="movements__Date">${daysPassed}</div>
        <div class="movements__value">${move}€</div>
     </div>`;
     containerMovements.insertAdjacentHTML("afterbegin", html);
@@ -148,7 +209,7 @@ createUsername(accounts);
 
 const updateUI = (account) => {
   // display movements
-  displayMovements(account.movements);
+  displayMovements(account);
   // display summary
   calcDisplaySummary(account);
   //display balance
@@ -167,6 +228,12 @@ btnLogin.addEventListener("click", (e) => {
       if (account.userName === uname && account.pin === pin) {
         console.log("login successfully");
         updateUI(account);
+        // Logging sign in Date to the UI
+        const now = new Date();
+        const day = `${now.getDate()}`.padStart(2, 0);
+        const year = now.getFullYear();
+        const month = `${now.getMonth()}`.padStart(2, 0);
+        labelDate.textContent = `${day}/${month}/${year}`;
         currentAccount = account;
         labelWelcome.textContent = `Welcome back, ${
           account.owner.split(" ")[0]
@@ -196,6 +263,12 @@ btnTransfer.addEventListener("click", (e) => {
   ) {
     currentAccount.movements.push(-transferAmount);
     receiverAcc.movements.push(transferAmount);
+    //Creating transaction Dates
+    const tranferDatesnd = new Date().toISOString();
+    const tranferDaterec = new Date().toISOString();
+    //Adding transaction Dates to the respective Account
+    currentAccount.movementsDates.push(tranferDatesnd);
+    receiverAcc.movementsDates.push(tranferDaterec);
     updateUI(currentAccount);
   }
   //clearing input fields
@@ -229,6 +302,8 @@ btnClose.addEventListener("click", (e) => {
 btnLoan.addEventListener("click", (e) => {
   e.preventDefault();
   const loanAmt = Number(inputLoanAmount.value);
+  const loanDate = new Date().toISOString();
+  currentAccount.movementsDates.push(loanDate);
   //checking for loan criterion
   if (
     loanAmt > 0 &&
@@ -247,6 +322,6 @@ let flag = false;
 btnSort.addEventListener("click", (e) => {
   e.preventDefault();
   // displaying soted movements
-  displayMovements(currentAccount.movements, !flag);
+  displayMovements(currentAccount, !flag);
   flag = !flag;
 });
